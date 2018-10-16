@@ -1,0 +1,7 @@
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\obj\Debug\TensorShow.csprojAssemblyReference.cache
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\obj\Debug\TensorShow.csproj.CoreCompileInputs.cache
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\bin\Debug\TensorShow.exe.config
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\bin\Debug\TensorShow.exe
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\bin\Debug\TensorShow.pdb
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\obj\Debug\TensorShow.exe
+C:\Users\vnjog\Documents\Visual Studio 2017\Projects\TensorShow\TensorShow\obj\Debug\TensorShow.pdb
