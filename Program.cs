@@ -2,97 +2,58 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.IO;
 using System.Threading.Tasks;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace TensorShow
 {
     class Program
     {
-        struct Dataset
+        static void Main()
         {
-            public double[] X { get; set; }
-            public int[] y { get; set; }
-            public int Samples { get; set; }
-            public int Features { get; set; }
-        }
+            int epochs = 6;
+            double learningRate = 0.01;
 
-        static void Evaluate(Func<double[], int> model, double[] testX, int[] testY)
-        {
-            Console.WriteLine("Evaluating...");
+            Optimizer gd = new GradientDescentOptimizer(learningRate);
 
-            int correct = 0;
-            for (int i = 0; i < testY.Length; i++)
-            {
-                int prediction = model(testX.Skip(i * 784).Take(784).ToArray());
-                Console.WriteLine($"Prediction: {prediction}, Actually: {testY[i]}");
-                correct += (prediction == testY[i]) ? 1 : 0;
-            }
-            Console.WriteLine($"Correct: {correct}/{testY.Length}");
-            Console.ReadLine();
-        }
+            var W = new Parameter();
+            var b = new Parameter();
 
-        static Dataset LoadMNIST()
-        {
-            double[] images = (from img_byte in File.ReadAllText("data/train.dat").Split(' ')
-                               select Double.Parse(img_byte) / 255).ToArray();
+            double[] X ={ 3.3,4.4,5.5,6.71,6.93,4.168,9.779,6.182,7.59,2.167, 7.042,10.791,5.313,7.997,5.654,9.27,3.1 };
+            double[] y = {1.7, 2.76, 2.09, 3.19, 1.694, 1.573, 3.366, 2.596, 2.53, 1.221, 2.827, 3.465, 1.65, 2.904, 2.42, 2.94, 1.3 };
 
-            int[] labels = (from img_byte in File.ReadAllText("data/labels.dat").Split(' ')
-                            select Int32.Parse(img_byte)).ToArray();
-
-            return new Dataset
-            {
-                X = images,
-                y = labels,
-                Samples = 60000,
-                Features = 784
-            };
-        }
-
-        static void Main(string[] args)
-        {
-            Optimizer gd = new GradientDescentOptimizer(0.01);
-
-            var W = Matrix.Load("W.model");
-            var b = Matrix.Load("b.model");
-
-            Console.WriteLine("Loading data...");
-            Dataset data = LoadMNIST();
-            
-
-            int epochs = 1, batch_size = 128;
             for (int epoch = 0; epoch < epochs; epoch++)
             {
-                for (int batch = 0; batch < 20000 / batch_size; batch++)
+                var loss = new Variable(0);
+                for (int i = 0; i < X.Length; i++)
                 {
-                    var error = new Variable(0);
-                    for (int i = 0; i < batch_size; i++)
-                    {
-                        int skip = batch * batch_size + i;
-
-                        Vector x = new Vector(data.Features, data.X.Skip(skip * data.Features).Take(data.Features).ToArray());
-                        Vector y = Vector.OneHot(data.y[skip], 10);
-
-                        error += Vector.ReduceSquared((W * x + b) - y) * (1.0 / batch_size);
-                    }
-                    TensorSlow.Minimize(gd, error);
-                    Console.WriteLine($"[Batch {epoch + 1}.{batch + 1}] Loss: {error.Value}");
+                    var prediction = W * X[i] + b;
+                    var error = (prediction + -y[i]).Power(2);
+                    loss += error;
                 }
+                Console.WriteLine("[Epoch: {0}] mean error = {1}", epoch, loss.Value / X.Length);
+                TensorSlow.Minimize(gd, loss);
             }
 
-            W.Save("W.model");
-            b.Save("b.model");
-            Console.ReadLine();
+            Console.WriteLine(" y = {0}x + {1}", W.Value, b.Value);
 
-            //var W = ReadFromBinaryFile<Matrix>("W.model");
-            //var b = ReadFromBinaryFile<Vector>("b.model");
+            Chart chart = new Chart();
+            chart.Size = new System.Drawing.Size(600, 600);
+            chart.ChartAreas.Add("ChartArea1");
+            chart.Legends.Add("legend1");
 
-            int skiptest = 20000, take = 500;
-            double[] testX = data.X.Skip(skiptest * data.Features).Take(take * data.Features).ToArray();
-            int[] testY = data.y.Skip(skiptest).Take(take).ToArray();
-            Func<double[], int> model = x => Vector.ArgMax(W * (new Vector(data.Features, x)) + b);
-            Evaluate(model, testX, testY);
+            chart.Series.Add("points");
+            for (int i = 0; i < X.Length; i++)
+                chart.Series["points"].Points.AddXY(X[i], y[i]);
+            chart.Series["points"].ChartType = SeriesChartType.Point;
+
+            chart.Series.Add("line");
+            chart.Series["line"].Points.AddXY(0, b.Value);
+            chart.Series["line"].Points.AddXY(X.Max(), W.Value * X.Max() + b.Value);
+            chart.Series["line"].ChartType = SeriesChartType.Line;
+
+            chart.SaveImage("output.jpg", ChartImageFormat.Jpeg);
+            Console.ReadKey();
         }
     }
 }
